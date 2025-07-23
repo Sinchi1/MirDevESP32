@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/esp32.dir/main.cpp.o -o esp32 

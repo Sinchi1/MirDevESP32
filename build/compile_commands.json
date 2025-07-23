@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/home/sinchi/MirDevESP32/build",
+  "command": "/usr/bin/c++   -g -o CMakeFiles/esp32.dir/main.cpp.o -c /home/sinchi/MirDevESP32/main.cpp",
+  "file": "/home/sinchi/MirDevESP32/main.cpp",
+  "output": "CMakeFiles/esp32.dir/main.cpp.o"
+}
+]
