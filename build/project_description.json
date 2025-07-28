@@ -1,7 +1,7 @@
 {
     "version":            "1.1",
     "project_name":       "mirDevEsp",
-    "project_version":    "8cf834f-dirty",
+    "project_version":    "f435588-dirty",
     "project_path":       "/home/sinchi/MirDevESP32",
     "idf_path":           "/home/sinchi/esp/esp-idf",
     "build_dir":          "/home/sinchi/MirDevESP32/build",
