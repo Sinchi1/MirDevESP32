@@ -10,7 +10,7 @@ struct CharacteristicOfAirFromDevice{
     std::string device;
     _Float16 humidity;
     _Float16 temperature;
-}
+};
 
 class BtController{    
     public: 
@@ -18,5 +18,5 @@ class BtController{
     
     private: 
         void gapScan(esp_gap_ble_cb_event_t, esp_ble_gap_cb_param_t*);
-        void gattcCallback(esp_gatts_cb_event_t, esp_gatt_if_t, esp_ble_gattc_cb_param_t*);
+        void gattcCallback(esp_gattc_cb_event_t, esp_gatt_if_t, esp_ble_gattc_cb_param_t*);
 };
