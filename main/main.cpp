@@ -1,8 +1,4 @@
 #include "HeaderFiles/main.h"
-#include "HeaderFiles/BleModuleInit.h"
-#include "HeaderFiles/BtController.h"
-
-
 
 extern "C" void app_main(void){
     ProgrammRunner runner = ProgrammRunner();
