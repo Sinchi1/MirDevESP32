@@ -1,10 +1,7 @@
-#include "HeaderFiles/BleModuleInit.h"
-
+#include "../HeaderFiles/BleModuleInit.h"
 
     void BleModuleInit::initBT(){
         esp_err_t ret;
-
-        nvs_flash_init();
                 
         ret = esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
         if (ret != ESP_OK){
