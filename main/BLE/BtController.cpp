@@ -11,10 +11,12 @@ void BtController::gapScan(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t*
         std::string advAunt;
         uint8_t lenght; 
         const uint8_t* name = esp_ble_resolve_adv_data(result->ble_adv, ESP_BLE_AD_TYPE_NAME_CMPL, &lenght);
+        ESP_LOGI("ESP BT DEBUG", "We find %.*s", lenght, name);
         if (name && lenght > 0){
             advAunt = std::string((char*)name, lenght);
-            if (advAunt.find("esp") != std::string::npos){
+            if (advAunt.find("ES_") != std::string::npos){
             esp_ble_gap_stop_scanning();
+            ESP_LOGI("ESP BT DEBUG", "Connected to %.*s", lenght, name);
             esp_ble_gattc_open(gatt, result->bda, BLE_ADDR_TYPE_PUBLIC, true);                
             }
         }
@@ -22,21 +24,23 @@ void BtController::gapScan(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t*
     }
 }
 
-uint16_t BtController::getLatestTemperature(){
-    return tempCharHandle;
-}
-
-uint16_t BtController::getLatestHumidity(){
-    return humidityCharHandle;
-}
-
 void BtController::gattcCallback(esp_gattc_cb_event_t event, esp_gatt_if_t if_t, esp_ble_gattc_cb_param_t* query){
     switch (event){
     case ESP_GATTC_REG_EVT:{
         gatt = if_t;
-        esp_ble_gap_set_scan_params(&params);
+        auto res = esp_ble_gap_set_scan_params(&params);
+        if (res != ESP_OK){
+            ESP_LOGE("ESP BT DEBUG", "SMTH WENT WRONG WHEN SETTING SCAN PARAMS");
+        }
+        ESP_LOGI("ESP BT DEBUG", "WE REGISTERD GAP_SCAN");
         break;
     }
+
+    // case ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT:{
+    //     ESP_LOGI("BLE", "Scan params set, starting scan");
+    //     esp_ble_gap_start_scanning(30);
+    //     break;
+    // }
 
     case ESP_GATTC_CONNECT_EVT:{
         connectionId = query->connect.conn_id;
@@ -66,6 +70,8 @@ void BtController::gattcCallback(esp_gattc_cb_event_t event, esp_gatt_if_t if_t,
             ESP_LOGE("esp", "Malloc for describtion of charElement failed.");
             break;
         }
+
+        ESP_LOGI("ESP DEBUG BT", "Попал на считывание данных");
 
         status = esp_ble_gattc_get_char_by_uuid(
             gatt,
@@ -113,6 +119,7 @@ void BtController::gattcCallback(esp_gattc_cb_event_t event, esp_gatt_if_t if_t,
         *   ....
         * 
         */
+       break;
     }
     
 
@@ -127,4 +134,12 @@ void BtController::runController(){
     esp_ble_gattc_register_callback(gattcCallback);
     esp_ble_gap_register_callback(gapScan);
     esp_ble_gattc_app_register(1);
+}
+
+uint16_t BtController::getLatestTemperature(){
+    return tempCharHandle;
+}
+
+uint16_t BtController::getLatestHumidity(){
+    return humidityCharHandle;
 }

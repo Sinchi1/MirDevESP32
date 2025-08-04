@@ -13,10 +13,12 @@ void ProgrammRunner::run(){
     test2.runController();
     std::cout << "Hello, ESP!\n";
         while (1) {
+        esp_ble_gap_start_scanning(5);
+
         float temp = test2.getLatestTemperature();
         float hum = test2.getLatestHumidity();
 
         ESP_LOGI("MAIN", "Temp: %.2f, Humidity: %.2f", temp, hum);
-        vTaskDelay(pdMS_TO_TICKS(5000)); // ждать 5 секунд
+        vTaskDelay(pdMS_TO_TICKS(5000)); 
     }
 }
