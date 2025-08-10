@@ -1,6 +1,6 @@
 idf_component_register(
-    SRCS "main.cpp" "BLE/BtController.cpp" "BLE/BleModuleInit.cpp"
-    INCLUDE_DIRS "." "BLE"
+    SRCS "main.cpp" "BLE/BtController.cpp" "entities/Aggregator.cpp"
+    INCLUDE_DIRS "." "BLE" "entities"
     REQUIRES 
         nvs_flash
         bt

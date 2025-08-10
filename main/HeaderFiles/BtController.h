@@ -1,48 +1,35 @@
 #pragma once
+#include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
+#include "freertos/queue.h"
 
-#include "esp_mac.h"
-#include <esp_gap_ble_api.h>
-#include <esp_gattc_api.h>
-#include <esp_log.h>
-#include <esp_bt_main.h>
 #include <string>
-#include "string.h"
+#include <unordered_set>
 
-static uint16_t connectionId = 0;
-static uint16_t tempCharHandle = 0;
-static uint16_t humidityCharHandle = 0;
-
-static esp_bt_uuid_t tempCharUuid = {
-    .len = ESP_UUID_LEN_16,
-    .uuid = {.uuid16 = 0x2A6E}, 
-};
-static esp_bt_uuid_t humidityCharUuid = {
-    .len = ESP_UUID_LEN_16,
-    .uuid = {.uuid16 = 0x2A6F}, 
-};
+// BLE Configuration constants
+#define DEVICE_CONNECT_TIMEOUT_MS     5000    // Таймаут подключения к устройству (5 сек)
+#define DEVICE_ADV_UPDATE_PERIOD_MS   30000   // Период сканирования устройств (30 сек)
+#define BLE_CONNECT_ATTEMPT_COUNT     3       // Количество попыток подключения
+#define DEVICE_HISTORY_QUERY_SIZE     72      // Размер запроса истории (72 записи = 3 дня по 24 записи)
+#define DEVICE_CHAR_UPDATE_PERIOD_MS  10000   // Период обновления характеристик (10 сек)
+#define DEVICE_NUM                    10      // Максимальное количество устройств в очереди
+#define NIMBLE_MAX_CONNECTIONS        3       // Максимум одновременных BLE соединений
 
 
-struct CharacteristicOfAirFromDevice{
-    std::string device;
-    float humidity;
-    float temperature;
-};
+class BLE
+{
+    std::unordered_set<std::string> known_devices;
+    EventGroupHandle_t              ble_event_bits;
+    QueueHandle_t                   ble_adv_dev_queue;
+    static void                     ble_scan_task(void* pvParameters);
+    static void                     ble_connect_task(void* pvParameters);
+    SemaphoreHandle_t*              radioMutex;
 
-static esp_ble_scan_params_t params = {
-            .scan_type = BLE_SCAN_TYPE_ACTIVE,
-            .own_addr_type = BLE_ADDR_TYPE_PUBLIC,
-            .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_ALL,
-            .scan_interval = 0x50,
-            .scan_window = 0x30,
-            .scan_duplicate = BLE_SCAN_DUPLICATE_DISABLE};
-
-class BtController{    
-    public: 
-        void runController();
-        uint16_t getLatestTemperature();
-        uint16_t getLatestHumidity();
-
-    private: 
-      static void gapScan(esp_gap_ble_cb_event_t, esp_ble_gap_cb_param_t*);
-      static void gattcCallback(esp_gattc_cb_event_t, esp_gatt_if_t, esp_ble_gattc_cb_param_t*);
+public:
+    static BLE& instance()
+    {
+        static BLE instance;
+        return instance;
+    }
+    void init(SemaphoreHandle_t* radioMutex_);
 };
