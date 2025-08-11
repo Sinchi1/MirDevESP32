@@ -34,10 +34,18 @@ dependencies:
       registry_url: https://components.espressif.com/
       type: service
     version: 9.3.0
+  vitoralho/lvgl_esp32_drivers:
+    component_hash: fcf798a2453b6e65e801c006029fe2fe0703649174b3bc38738e62a48f4170e5
+    dependencies: []
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.0.5
 direct_dependencies:
 - h2zero/esp-nimble-cpp
 - idf
 - lvgl/lvgl
-manifest_hash: eba87d3c9065684b3e3be1805a6e261c551ddf5d91406bd822d2e0d668a90a6e
+- vitoralho/lvgl_esp32_drivers
+manifest_hash: 082cbcea546e7e2e0d4013c553a22264ede58bd886a451ab718b6cc3c0657e88
 target: esp32s3
 version: 2.0.0

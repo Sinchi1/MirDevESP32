@@ -16,3 +16,4 @@ dependencies:
   #   public: true
   lvgl/lvgl: ^9.*
   h2zero/esp-nimble-cpp: ^2.0.2
+  vitoralho/lvgl_esp32_drivers: ^1.0.5

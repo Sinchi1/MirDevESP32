@@ -3,9 +3,9 @@
 #include "portmacro.h"
 
 #include "HeaderFiles/BtController.h"
-#include "entities/Aggregator.h"
-#include "entities/EnvironmentalSensorData.h"
-#include "entities/settings.h"
+#include "HeaderFiles/Aggregator.h"
+#include "HeaderFiles/EnvironmentalSensorData.h"
+#include "HeaderFiles/settings.h"
 
 #include "NimBLEDevice.h"
 #include "esp_log.h"
@@ -324,170 +324,6 @@ static bool setTime(NimBLEClient* pClient)
     return true;
 }
 
-static bool readHistory(NimBLEClient* pClient, const std::string& dev_name, size_t entries_num)
-{
-    ESP_LOGD(TAG, "readHistory %s", dev_name.c_str());
-    NimBLERemoteService* pSvc = pClient->getService(BLE_ESS_SERVICE_UUID);
-    if (pSvc)
-    {
-        NimBLERemoteCharacteristic* pReadChr = pSvc->getCharacteristic(BLE_HIST_READ_UUID);
-        NimBLERemoteCharacteristic* pConfChr = pSvc->getCharacteristic(BLE_HIST_CONF_UUID);
-        if (pReadChr && pConfChr)
-        {
-            if (pConfChr->canWrite())
-            {
-                size_t      need_read_entries = 0;
-                size_t      real_read_entries = 0;
-                HistoryConf conf;
-                do
-                {
-                    // forward logic (active now)
-                    // start_id = 72 (96-24)
-                    // end_id = 96
-                    // ...
-                    // step = 24
-
-                    // reverse logic
-                    // start_id = 0 (0+24)
-                    // end_id = 24
-                    // ...
-                    // step = 24
-
-                    memset(&conf, 0, sizeof(HistoryConf));
-
-                    conf.ids.start_id +=
-                        (DEVICE_HISTORY_QUERY_SIZE - BLE_CYCLE_ENTRIES - need_read_entries);
-                    conf.ids.end_id += (DEVICE_HISTORY_QUERY_SIZE - need_read_entries);
-                    need_read_entries += BLE_CYCLE_ENTRIES;
-                    pConfChr->writeValue(&conf.bytes[0], sizeof(conf.bytes));
-
-                    ESP_LOGI(TAG, "conf.ids.start_id=%d, conf.ids.end_id=%d,", conf.ids.start_id,
-                             conf.ids.end_id);
-
-                    HistorySensorMeasurement measurement;
-                    bool                     need_time_set = false;
-                    size_t                   i             = 0;
-                    const NimBLEAttValue     attr_val      = pReadChr->readValue();
-                    const uint8_t*           ptr           = attr_val.data();
-                    size_t                   sz            = attr_val.size();
-                    ESP_LOG_BUFFER_HEXDUMP(TAG, ptr, sz, ESP_LOG_DEBUG);
-                    ESP_LOGI(TAG, "read %u bytes of history", sz);
-                    do
-                    {
-                        size_t entries_to_read = sz / sizeof(HistorySensorMeasurement);
-                        if (entries_to_read == 0)
-                        {
-                            ESP_LOGW(TAG, "no entries read");
-                            // TODO:
-                            // if there is no history for the required period of time, then try to
-                            // read what is there
-                            break;
-                            //
-                        }
-                        if ((sz % sizeof(HistorySensorMeasurement)) != 0)
-                        {
-                            ESP_LOGW(TAG, "incorrect history size: sz=%u, rem=%d", sz,
-                                     sz % sizeof(HistorySensorMeasurement));
-                        }
-                        for (; i < entries_to_read; i++)
-                        {
-                            memcpy(&measurement, ptr, sizeof(HistorySensorMeasurement));
-                            ESP_LOGI(TAG,
-                                     "h[%u]: time_s=%lu, pressure=%ld, "
-                                     "temperature=%d, co2=%u, "
-                                     "voc=%u, iaq=%u, humidity=%u, is_time_set=%u",
-                                     i, measurement.time_s, measurement.pressure,
-                                     measurement.temperature, measurement.co2, measurement.voc,
-                                     measurement.iaq, measurement.humidity,
-                                     measurement.is_time_set);
-                            // TODO:
-                            // need_time_set = measurement.is_time_set == false;
-                            if (need_time_set)
-                            {
-                                break;
-                            }
-
-                            EnvironmentalSensor::Flags flags;
-                            flags.set_source(EnvironmentalSensor::Source::BLE);
-                            flags.set_history(true);
-                            // History only per one day ago
-                            if (need_read_entries > DEVICE_HISTORY_QUERY_SIZE / 2)
-                            {
-                                Aggregator::instance().addPressureData(
-                                    dev_name, {
-                                                  .timestamp = measurement.time_s,
-                                                  .flags     = flags,
-                                                  .value = float(measurement.pressure), // to hPa
-                                              });
-                            }
-                            //
-#if 1
-                            Aggregator::instance().addTemperatureData(
-                                dev_name,
-                                {
-                                    .timestamp = measurement.time_s,
-                                    .flags     = flags,
-                                    .value = float(measurement.temperature) / 100, // roundf(...),
-                                });
-                            Aggregator::instance().addCO2Data(dev_name,
-                                                              {
-                                                                  .timestamp = measurement.time_s,
-                                                                  .flags     = flags,
-                                                                  .value = float(measurement.co2),
-                                                              });
-                            Aggregator::instance().addVOCData(dev_name,
-                                                              {
-                                                                  .timestamp = measurement.time_s,
-                                                                  .flags     = flags,
-                                                                  .value = float(measurement.voc),
-                                                              });
-                            Aggregator::instance().addIAQData(dev_name,
-                                                              {
-                                                                  .timestamp = measurement.time_s,
-                                                                  .flags     = flags,
-                                                                  .value = float(measurement.iaq),
-                                                              });
-                            Aggregator::instance().addHumidityData(
-                                dev_name, {
-                                              .timestamp = measurement.time_s,
-                                              .flags     = flags,
-                                              .value     = float(measurement.humidity) / 100,
-                                          });
-#endif
-
-                            ptr += sizeof(HistorySensorMeasurement);
-                            ++real_read_entries;
-                        }
-                    } while (false);
-                    if (need_time_set)
-                    {
-                        setTime(pClient);
-                        return false;
-                    }
-                    // if (i < BLE_CYCLE_ENTRIES)
-                    // {
-                    //     return false;
-                    // }
-                } while (need_read_entries < entries_num);
-
-                ESP_LOGI(TAG, "real_read_entries = %d", real_read_entries);
-                Aggregator::instance().setReadEntries(real_read_entries);
-            } else
-            {
-                return false;
-            }
-        } else
-        {
-            ESP_LOGW(TAG, "history characteristics are not found");
-            return false;
-        }
-    } else
-    {
-        return false;
-    }
-    return true;
-}
-
 static bool reachChr(NimBLEClient* pClient, const std::string& dev_name)
 {
     NimBLERemoteService* pSvc = pClient->getService(BLE_ESS_SERVICE_UUID);
@@ -541,22 +377,6 @@ static bool reachChr(NimBLEClient* pClient, const std::string& dev_name)
         time_t   time_val = time(NULL);
         uint32_t t        = (uint32_t)time_val;
         ESP_LOGI(TAG, "t=%lu, voc=%u, iaq=%u", t, voc, iaq);
-        if (voc > 0)
-        {
-            Aggregator::instance().addVOCData(dev_name, {
-                                                            .timestamp = t,
-                                                            .flags     = flags,
-                                                            .value     = float(voc),
-                                                        });
-        }
-        if (iaq > 0)
-        {
-            Aggregator::instance().addIAQData(dev_name, {
-                                                            .timestamp = t,
-                                                            .flags     = flags,
-                                                            .value     = float(iaq),
-                                                        });
-        }
         pClient->disconnect();
     } else
     {
@@ -642,12 +462,12 @@ void BLE::ble_connect_task(void* pvParameters)
 
             if (pClient) {
                 auto res = ble->known_devices.insert(dev_name);
-                if (res.second) {
-                    ESP_LOGD(TAG, "New device, trying to read history...");
-                    if (!readHistory(pClient, dev_name, DEVICE_HISTORY_QUERY_SIZE)) {
-                        ESP_LOGW(TAG, "Couldn't retrieve required number of history entries: %d", DEVICE_HISTORY_QUERY_SIZE);
-                    }
-                }
+                // if (res.second) {
+                //     ESP_LOGD(TAG, "New device, trying to read history...");
+                //     if (!readHistory(pClient, dev_name, DEVICE_HISTORY_QUERY_SIZE)) {
+                //         ESP_LOGW(TAG, "Couldn't retrieve required number of history entries: %d", DEVICE_HISTORY_QUERY_SIZE);
+                //     }
+                // }
                 reachChr(pClient, dev_name);
                 is_completed = true;
             } else {

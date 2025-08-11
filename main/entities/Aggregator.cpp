@@ -1,4 +1,4 @@
-#include "Aggregator.h"
+#include "HeaderFiles/Aggregator.h"
 #include "esp_log.h"
 
 static const char* TAG_AGGR = "Aggregator";
@@ -9,7 +9,6 @@ Aggregator& Aggregator::instance() {
 }
 
 Aggregator::Aggregator() {
-    // Рекурсивный мьютекс, чтобы можно было безопасно nested lock (если понадобится)
     mutex_ = xSemaphoreCreateRecursiveMutex();
     if (!mutex_) {
         ESP_LOGE(TAG_AGGR, "Failed to create mutex");
@@ -88,19 +87,6 @@ void Aggregator::addCO2Data(const std::string& id, const EnvironmentalSensor::CO
     unlock();
 }
 
-void Aggregator::addVOCData(const std::string& id, const EnvironmentalSensor::VOCSample& s) {
-    lock();
-    auto& dev = devices_[id];
-    pushBounded(dev.voc, s, MAX_POINTS_PER_STREAM);
-    unlock();
-}
-
-void Aggregator::addIAQData(const std::string& id, const EnvironmentalSensor::IAQSample& s) {
-    lock();
-    auto& dev = devices_[id];
-    pushBounded(dev.iaq, s, MAX_POINTS_PER_STREAM);
-    unlock();
-}
 
 void Aggregator::setReadEntries(size_t count) {
     lock();
