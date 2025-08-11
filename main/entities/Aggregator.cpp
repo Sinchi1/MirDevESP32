@@ -45,16 +45,15 @@ void Aggregator::addDevice(const std::string& id) {
 }
 
 bool Aggregator::hasDevice(const std::string& id) const {
-    // Геттер тоже защищаем
-    const_cast<Aggregator*>(this)->lock();
+    lock();
     bool exists = devices_.find(id) != devices_.end();
-    const_cast<Aggregator*>(this)->unlock();
+    unlock();
     return exists;
 }
 
 void Aggregator::addBatteryData(const std::string& id, uint8_t batteryPercent) {
     lock();
-    auto& dev = devices_[id]; // создаст если нет
+    auto& dev = devices_[id];
     dev.lastBattery = batteryPercent;
     unlock();
 }
@@ -62,28 +61,28 @@ void Aggregator::addBatteryData(const std::string& id, uint8_t batteryPercent) {
 void Aggregator::addTemperatureData(const std::string& id, const EnvironmentalSensor::TemperatureSample& s) {
     lock();
     auto& dev = devices_[id];
-    pushBounded(dev.temperature, s, MAX_POINTS_PER_STREAM);
+    dev.temperature = s;
     unlock();
 }
 
 void Aggregator::addHumidityData(const std::string& id, const EnvironmentalSensor::HumiditySample& s) {
     lock();
     auto& dev = devices_[id];
-    pushBounded(dev.humidity, s, MAX_POINTS_PER_STREAM);
+    dev.humidity = s;
     unlock();
 }
 
 void Aggregator::addPressureData(const std::string& id, const EnvironmentalSensor::PressureSample& s) {
     lock();
     auto& dev = devices_[id];
-    pushBounded(dev.pressure, s, MAX_POINTS_PER_STREAM);
+    dev.pressure = s;
     unlock();
 }
 
 void Aggregator::addCO2Data(const std::string& id, const EnvironmentalSensor::CO2Sample& s) {
     lock();
     auto& dev = devices_[id];
-    pushBounded(dev.co2, s, MAX_POINTS_PER_STREAM);
+    dev.co2 = s;
     unlock();
 }
 
@@ -95,8 +94,8 @@ void Aggregator::setReadEntries(size_t count) {
 }
 
 size_t Aggregator::getLastReadEntries() const {
-    const_cast<Aggregator*>(this)->lock();
+    lock();
     size_t v = lastReadEntries_;
-    const_cast<Aggregator*>(this)->unlock();
+    unlock();
     return v;
 }

@@ -39,10 +39,10 @@ private:
     struct DeviceData {
         uint8_t lastBattery{255}; 
 
-        std::vector<EnvironmentalSensor::TemperatureSample> temperature;
-        std::vector<EnvironmentalSensor::HumiditySample>    humidity;
-        std::vector<EnvironmentalSensor::PressureSample>    pressure;
-        std::vector<EnvironmentalSensor::CO2Sample>         co2;
+        EnvironmentalSensor::TemperatureSample temperature;
+        EnvironmentalSensor::HumiditySample    humidity;
+        EnvironmentalSensor::PressureSample   pressure;
+        EnvironmentalSensor::CO2Sample         co2;
     };
 
     std::unordered_map<std::string, DeviceData> devices_;
@@ -54,12 +54,4 @@ private:
     SemaphoreHandle_t mutex_;
     void lock() const;
     void unlock() const;
-
-    template<typename T>
-    static void pushBounded(std::vector<T>& vec, const T& v, size_t maxN) {
-        if (vec.size() >= maxN) {
-            vec.erase(vec.begin());
-        }
-        vec.emplace_back(v);
-    }
 };

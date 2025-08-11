@@ -8,7 +8,6 @@
 
 #include "lvgl.h"
 #include "esp_log.h"
-#include "lvgl_helpers.h" 
 
 #include "HeaderFiles/BtController.h"  
 
@@ -18,7 +17,6 @@ static SemaphoreHandle_t radioMutex = nullptr;
 
 extern "C" void app_main(void)
 {
-    //
 
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -41,9 +39,8 @@ extern "C" void app_main(void)
     ESP_LOGI(TAG, "BLE initialized, tasks started");
 
     while (1) {
-        lv_timer_handler();               
         ESP_LOGI(TAG, "Main loop running...");
-        vTaskDelay(pdMS_TO_TICKS(100)); 
-        
+        vTaskDelay(pdMS_TO_TICKS(20000)); 
+    
     }
 }
