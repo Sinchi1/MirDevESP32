@@ -1,5 +1,4 @@
 #include "HeaderFiles/Aggregator.h"
-#include "esp_log.h"
 
 static const char* TAG_AGGR = "Aggregator";
 

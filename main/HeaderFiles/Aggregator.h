@@ -9,6 +9,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 
+#include "esp_log.h"
+
 #include "EnvironmentalSensorData.h"
 
 class Aggregator {
@@ -34,8 +36,6 @@ private:
     ~Aggregator();
     Aggregator(const Aggregator&)            = delete;
     Aggregator& operator=(const Aggregator&) = delete;
-
-private:
     struct DeviceData {
         uint8_t lastBattery{255}; 
 

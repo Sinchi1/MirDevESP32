@@ -1,21 +1,5 @@
-#include "freertos/FreeRTOS.h"
-#include "freertos/projdefs.h"
-#include "portmacro.h"
-
 #include "HeaderFiles/BtController.h"
-#include "HeaderFiles/Aggregator.h"
-#include "HeaderFiles/EnvironmentalSensorData.h"
-#include "HeaderFiles/settings.h"
 
-#include "NimBLEDevice.h"
-#include "esp_log.h"
-#include "esp_log_buffer.h"
-#include "esp_log_level.h"
-
-#include <cstdint>
-#include <cmath>
-#include <sys/time.h>
-#include <time.h>
 
 static const char* TAG = "ble";
 
@@ -78,15 +62,6 @@ struct HistorySensorMeasurement {
 };
 
 // Interpret a 32-bit value as IDs, integer, or bytes (little-endian assumed)
-union HistoryConf {
-    struct {
-        uint16_t end_id;   // Lower 16 bits of the 32-bit value (little-endian)
-        uint16_t start_id; // Upper 16 bits of the 32-bit value (little-endian)
-    } ids;
-    uint32_t combined; // Access as a full 32-bit value
-    uint8_t  bytes[4]; // Access individual bytes (bytes[0] = LSB)
-};
-
 struct bt_cts_time_format {
     uint16_t year;
     uint8_t  mon;
@@ -103,21 +78,20 @@ static NimBLEScan* pScan = nullptr;
 
 class ClientCallbacks : public NimBLEClientCallbacks
 {
-    void onConnect(NimBLEClient* pClient) override
-    {
+    void onConnect(NimBLEClient* pClient) override{
         ESP_LOGD(TAG, "connected to: %s", pClient->getPeerAddress().toString().c_str());
     }
-    void onDisconnect(NimBLEClient* pClient, int reason) override
-    {
+    void onDisconnect(NimBLEClient* pClient, int reason) override{
         ESP_LOGD(TAG, "%s disconnected, reason = %d", pClient->getPeerAddress().toString().c_str(),
                  reason);
     }
 } static clientCallbacks;
 
-class ScanCallbacks : public NimBLEScanCallbacks
-{
+class ScanCallbacks : public NimBLEScanCallbacks{
+
     EventGroupHandle_t event_bits_;
     QueueHandle_t      adv_dev_queue_;
+
 public:
     ScanCallbacks(EventGroupHandle_t event_bits, QueueHandle_t adv_dev_queue)
         : event_bits_(event_bits), adv_dev_queue_(adv_dev_queue)
@@ -134,7 +108,6 @@ public:
             return;
         }
 
-        // Парсинг метрик только если есть нужное service data:
         for (size_t i = 0; i < advertisedDevice->getServiceDataCount(); i++) {
             NimBLEUUID uuid = advertisedDevice->getServiceDataUUID(i);
             if (uuid == NimBLEUUID(BLE_ADV_SERVICE_UUID)) {
@@ -176,13 +149,10 @@ public:
                 Aggregator::instance().addCO2Data(dev_name,
                     { .timestamp=uint32_t(t), .flags=flags, .value=float(co2) });
 
-                // Можно обработать дополнительные метрики как нужно...
-
-                break; // Нашли и обработали нужный пакет — выходим из цикла serviceData
+                break; 
             }
         }
 
-        // Не забываем делать КОПИЮ устройства для очереди!
         NimBLEAdvertisedDevice* advCopy = new NimBLEAdvertisedDevice(*advertisedDevice);
         BaseType_t sendResult = xQueueSend(adv_dev_queue_, &advCopy, pdMS_TO_TICKS(1000));
         if (sendResult != pdPASS) {
@@ -201,8 +171,7 @@ public:
 };
 
 
-static NimBLEClient* connectToDevice(NimBLEAdvertisedDevice* advDevice)
-{
+static NimBLEClient* connectToDevice(NimBLEAdvertisedDevice* advDevice){
     NimBLEClient* pClient = nullptr;
     /** Check if we have a client we should reuse first **/
     if (NimBLEDevice::getCreatedClientCount())
@@ -274,54 +243,6 @@ static NimBLEClient* connectToDevice(NimBLEAdvertisedDevice* advDevice)
         }
     }
     return pClient;
-}
-
-static bool setTime(NimBLEClient* pClient)
-{
-    ESP_LOGI(TAG, "try to set time on device");
-    NimBLERemoteService* pSvc = pClient->getService(BLE_TIME_SERVICE_UUID);
-    if (pSvc)
-    {
-        NimBLERemoteCharacteristic* pChr = pSvc->getCharacteristic(BLE_TIME_CHAR_UUID);
-        if (pChr)
-        {
-            struct timeval tv;
-            if (gettimeofday(&tv, NULL) == -1)
-            {
-                ESP_LOGE(TAG, "unable to gettimeofday");
-                return false;
-            }
-            struct tm* tm_info = localtime(&tv.tv_sec);
-            ESP_LOGD(TAG,
-                     "tm_sec=%d, tm_min=%d, tm_hour=%d, tm_mday=%d, tm_mon=%d, "
-                     "tm_year=%d, tm_wday=%d, tm_yday=%d, tm_isdst=%d",
-                     tm_info->tm_sec, tm_info->tm_min, tm_info->tm_hour, tm_info->tm_mday,
-                     tm_info->tm_mon, tm_info->tm_year, tm_info->tm_wday, tm_info->tm_yday,
-                     tm_info->tm_isdst);
-
-            bt_cts_time_format current_time = {
-                .year  = uint16_t(tm_info->tm_year + 1900), // Year (e.g., 2023)
-                .mon   = uint8_t(tm_info->tm_mon + 1),      // Month (1-12, October here)
-                .mday  = uint8_t(tm_info->tm_mday),         // Day of the month (1-31)
-                .hours = uint8_t(tm_info->tm_hour),         // Hours in **24-hour format** (3 PM)
-                .min   = uint8_t(tm_info->tm_min),          // Minutes (30)
-                .sec   = uint8_t(tm_info->tm_sec),          // Seconds (45)
-                .wday  = uint8_t(tm_info->tm_wday + 1),     // Day of week (1=Monday, 3=Wednesday)
-                .fractions256 = 128,                        // 0.5 seconds (128/256)
-                .reason       = 0x01,                       // Manual update reason (bit 0)
-            };
-            pChr->writeValue((uint8_t*)&current_time, sizeof(bt_cts_time_format));
-        } else
-        {
-            ESP_LOGW(TAG, "time characteristic not found");
-            return false;
-        }
-    } else
-    {
-        ESP_LOGW(TAG, "time service not found");
-        return false;
-    }
-    return true;
 }
 
 static bool reachChr(NimBLEClient* pClient, const std::string& dev_name)
@@ -462,12 +383,6 @@ void BLE::ble_connect_task(void* pvParameters)
 
             if (pClient) {
                 auto res = ble->known_devices.insert(dev_name);
-                // if (res.second) {
-                //     ESP_LOGD(TAG, "New device, trying to read history...");
-                //     if (!readHistory(pClient, dev_name, DEVICE_HISTORY_QUERY_SIZE)) {
-                //         ESP_LOGW(TAG, "Couldn't retrieve required number of history entries: %d", DEVICE_HISTORY_QUERY_SIZE);
-                //     }
-                // }
                 reachChr(pClient, dev_name);
                 is_completed = true;
             } else {
@@ -475,7 +390,7 @@ void BLE::ble_connect_task(void* pvParameters)
             }
             ESP_LOGI(TAG, "Done with the client: %s", dev_name.c_str());
 
-            delete advDevice; // Освобождаем память всегда!
+            delete advDevice; 
         }
 
         xEventGroupSetBits(ble->ble_event_bits, BLE_EVENT_CLIENT_STOPPED_MSK);
@@ -547,9 +462,4 @@ void BLE::init(SemaphoreHandle_t* radioMutex_) {
         return;
     }
     ESP_LOGI(TAG, "ble_connect_task created successfully");
-
-    // Логируем память после создания задач
-    ESP_LOGI(TAG, "Memory after task creation: Internal RAM free: %u bytes, PSRAM free: %u bytes",
-             heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-             heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
 }

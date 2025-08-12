@@ -25,8 +25,8 @@ struct Sample {
     T        value{};    
 };
 
-using TemperatureSample = Sample<float>;  // °C
-using HumiditySample    = Sample<float>; // %RH
-using PressureSample    = Sample<float>;  // Па/гПа 
-using CO2Sample         = Sample<float>;  // ppm
+using TemperatureSample = Sample<float>;
+using HumiditySample    = Sample<float>; 
+using PressureSample    = Sample<float>;  
+using CO2Sample         = Sample<float>;  
 } 
