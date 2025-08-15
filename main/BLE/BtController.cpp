@@ -135,6 +135,12 @@ public:
                     dev_name.c_str(), long(t), battery,
                     float(temperature)/100, float(humidity)/100, pressure, co2);
 
+                if (xQueueSend(g_sensor_queue, &data, 0) == pdTRUE) {
+                ESP_LOGI(TAG, "temp to ui %s", dev_name.c_str());
+                } else {
+                    ESP_LOGW(TAG, "Failed to send to UI queue (full?)");
+                }
+
                 EnvironmentalSensor::Flags flags;
                 flags.set_source(EnvironmentalSensor::Source::BLE);
 

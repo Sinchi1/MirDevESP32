@@ -12,6 +12,7 @@
 #include "HeaderFiles/Aggregator.h"
 #include "HeaderFiles/EnvironmentalSensorData.h"
 #include "HeaderFiles/settings.h"
+#include "HeaderFiles/Ui.h"
 
 #include "NimBLEDevice.h"
 #include "esp_log.h"

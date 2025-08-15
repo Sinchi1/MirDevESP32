@@ -36,6 +36,7 @@ private:
     ~Aggregator();
     Aggregator(const Aggregator&)            = delete;
     Aggregator& operator=(const Aggregator&) = delete;
+
     struct DeviceData {
         uint8_t lastBattery{255}; 
 

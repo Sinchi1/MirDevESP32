@@ -5,9 +5,9 @@
 #include "esp_log.h"
 #include "nvs_flash.h"
 
-
-#include "lvgl.h"
 #include "esp_log.h"
+
+#include "HeaderFiles/Ui.h"
 
 #include "HeaderFiles/BtController.h"  
 
@@ -25,22 +25,26 @@ extern "C" void app_main(void)
     }
     ESP_ERROR_CHECK(ret);
 
-    radioMutex = xSemaphoreCreateMutex();
-    if (radioMutex == nullptr) {
-        ESP_LOGE(TAG, "Failed to create radio mutex");
-        return;
-    }
+    UI_ESP ui_esp = UI_ESP::instance();
 
-    ESP_LOGI(TAG, "Starting BLE application");
+    ui_esp.lvgl_init();
 
-    BLE& bleInstance = BLE::instance();
-    bleInstance.init(&radioMutex);
+    // radioMutex = xSemaphoreCreateMutex();
+    // if (radioMutex == nullptr) {
+    //     ESP_LOGE(TAG, "Failed to create radio mutex");
+    //     return;
+    // }
 
-    ESP_LOGI(TAG, "BLE initialized, tasks started");
+    // ESP_LOGI(TAG, "Starting BLE application");
 
-    while (1) {
-        ESP_LOGI(TAG, "Main loop running...");
-        vTaskDelay(pdMS_TO_TICKS(20000)); 
+    // BLE& bleInstance = BLE::instance();
+    // bleInstance.init(&radioMutex);
+
+    // ESP_LOGI(TAG, "BLE initialized, tasks started");
+
+    // while (1) {
+    //     ESP_LOGI(TAG, "Main loop running...");
+    //     vTaskDelay(pdMS_TO_TICKS(20000)); 
     
-    }
+    // }
 }
