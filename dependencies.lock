@@ -84,18 +84,18 @@ dependencies:
       type: idf
     version: 5.4.0
   lvgl/lvgl:
-    component_hash: b702d642e03e95928046d5c6726558e6444e112420c77efa5fdb6650b0a13c5d
+    component_hash: d7c1ac037ae6e85d94897f807d6e7ba0946a83e720074fc95a4f6241da9f9f53
     dependencies: []
     source:
       registry_url: https://components.espressif.com/
       type: service
-    version: 9.3.0
+    version: 8.4.0
 direct_dependencies:
 - espressif/esp32_display_panel
 - espressif/esp_lvgl_port
 - h2zero/esp-nimble-cpp
 - idf
 - lvgl/lvgl
-manifest_hash: 35c3a96b93f5b7a797aad61e4baa29f9e8f248a67873824c508aaa3d37a4de65
+manifest_hash: f19bd36367d73f391406fdfdb62570ed4981a4e2a30b98e99d8c8bc1716f2c01
 target: esp32s3
 version: 2.0.0

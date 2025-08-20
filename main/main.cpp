@@ -25,26 +25,24 @@ extern "C" void app_main(void)
     }
     ESP_ERROR_CHECK(ret);
 
-    UI_ESP ui_esp = UI_ESP::instance();
+    UI_ESP& ui_esp = UI_ESP::instance();
+
+    g_sensor_queue = xQueueCreate(10, sizeof(uint8_t*));
+    assert(g_sensor_queue != NULL);
+
+    radioMutex = xSemaphoreCreateMutex();
+    if (radioMutex == nullptr) {
+        ESP_LOGE(TAG, "Failed to create radio mutex");
+        return;
+    }
+
+    ESP_LOGI(TAG, "Starting BLE application");
+
+    BLE& bleInstance = BLE::instance();
+    bleInstance.init(&radioMutex);
+
+    ESP_LOGI(TAG, "BLE initialized, tasks started");
 
     ui_esp.lvgl_init();
 
-    // radioMutex = xSemaphoreCreateMutex();
-    // if (radioMutex == nullptr) {
-    //     ESP_LOGE(TAG, "Failed to create radio mutex");
-    //     return;
-    // }
-
-    // ESP_LOGI(TAG, "Starting BLE application");
-
-    // BLE& bleInstance = BLE::instance();
-    // bleInstance.init(&radioMutex);
-
-    // ESP_LOGI(TAG, "BLE initialized, tasks started");
-
-    // while (1) {
-    //     ESP_LOGI(TAG, "Main loop running...");
-    //     vTaskDelay(pdMS_TO_TICKS(20000)); 
-    
-    // }
 }

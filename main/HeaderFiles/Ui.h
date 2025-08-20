@@ -4,8 +4,7 @@
 
 #include "esp_log.h"
 
-// #include "lvgl_v8_port.h"
-#include "esp_lvgl_port.h"
+#include "adapt/lvgl_port_v8.h"
 
 #define LVGL_PORT_TASK_CORE -1
 
@@ -25,7 +24,6 @@
 #define IDX_CO2L 14      /* Index of lo byte of co2 in service data*/
 #define IDX_CO2H 15      /* Index of hi byte of co2 in service data*/
 
-// static const char* TAG = "ESP-UI";
 static bool connected = false;
 
 class UI_ESP{
@@ -41,9 +39,9 @@ class UI_ESP{
 
   private:
     UI_ESP() = default;
-    void UI_ESP::lvgl_task(void *arg);
-    void UI_ESP::create_text_panel();
-    void UI_ESP::update_text_panel(const uint8_t *data);
+    static void lvgl_task();
+    void create_text_panel();
+    void update_text_panel(const uint8_t *data);
 
     static lv_obj_t *lbl_temp;
     static lv_obj_t *lbl_hum;
