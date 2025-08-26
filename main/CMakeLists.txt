@@ -14,7 +14,7 @@ file(GLOB_RECURSE adapt  "./adapt/*.cpp")
 
 
 idf_component_register(SRCS "main.cpp" ${BLE} ${Entities} ${UI} ${adapt}
-                    REQUIRES spi_flash esp32_display_panel esp_timer lvgl esp-nimble-cpp nvs_flash
+                    REQUIRES spi_flash esp32_display_panel esp_timer lvgl esp-nimble-cpp nvs_flash 
                     INCLUDE_DIRS "." "BLE" "entities" "UI" "HeaderFiles" "adapt")
 
 target_compile_options(${COMPONENT_LIB} PRIVATE -Wno-missing-field-initializers)

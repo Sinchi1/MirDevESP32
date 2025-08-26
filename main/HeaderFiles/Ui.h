@@ -6,6 +6,8 @@
 
 #include "adapt/lvgl_port_v8.h"
 
+// #include "adapt/i2c_bus.h"
+
 #define LVGL_PORT_TASK_CORE -1
 
 #include "HeaderFiles/BtController.h"
@@ -28,13 +30,12 @@ static bool connected = false;
 
 class UI_ESP{
   public:
-    void lvgl_init(void);
+    void lvgl_init(lv_disp_t*  dispp, lv_theme_t* theme);
 
     static UI_ESP& instance(){
         static UI_ESP instance;
         return instance;
     }
-
     ~UI_ESP() noexcept = default;
 
   private:

@@ -1,48 +1,97 @@
-// #include "HeaderFiles/main.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
-#include "esp_log.h"
-#include "nvs_flash.h"
+// /*
+//  * SPDX-FileCopyrightText: 2010-2022 Espressif Systems (Shanghai) CO LTD
+//  *
+//  * SPDX-License-Identifier: CC0-1.0
+//  */
 
-#include "esp_log.h"
+// #include "esp_display_panel.hpp"
+// #include "esp_log.h"
 
-#include "HeaderFiles/Ui.h"
+// #include "adapt/lvgl_port_v8.h"
 
-#include "HeaderFiles/BtController.h"  
+// #include "freertos/FreeRTOS.h"
+// #include "freertos/event_groups.h"
+// #include "freertos/queue.h"
 
-static const char* TAG = "main";
+// #include "esp_log.h"
+// #include "esp_heap_caps.h"
+// #include "esp_log_level.h"
+// #include "lvgl.h"
+// #include "i2c_bus.h"
+// #include "nvs_flash.h"
 
-static SemaphoreHandle_t radioMutex = nullptr;
+// #include "Ui.h"
+// #include "BtController.h"
 
-extern "C" void app_main(void)
-{
+// using namespace esp_panel::drivers;
+// using namespace esp_panel::board;
 
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
+// static const char* TAG = "main";
 
-    UI_ESP& ui_esp = UI_ESP::instance();
+// static SemaphoreHandle_t radioMutex = nullptr;
 
-    g_sensor_queue = xQueueCreate(10, sizeof(uint8_t*));
-    assert(g_sensor_queue != NULL);
+// #define I2C_NUM I2C_NUM_0
+// #define I2C_MASTER_SDA_IO GPIO_NUM_15 /*!< gpio number for I2C master clock */
+// #define I2C_MASTER_SCL_IO GPIO_NUM_16 /*!< gpio number for I2C master data  */
+// #define I2C_MASTER_FREQ_HZ 100000     /*!< I2C master clock frequency */
 
-    radioMutex = xSemaphoreCreateMutex();
-    if (radioMutex == nullptr) {
-        ESP_LOGE(TAG, "Failed to create radio mutex");
-        return;
-    }
+// extern "C" void app_main(void)
+// {
+//     i2c_config_t conf = {
+//         .mode = I2C_MODE_MASTER,
+//         .sda_io_num = I2C_MASTER_SDA_IO,
+//         .scl_io_num = I2C_MASTER_SCL_IO,
+//         .sda_pullup_en = GPIO_PULLUP_ENABLE,
+//         .scl_pullup_en = GPIO_PULLUP_ENABLE,
+//         .master =
+//             {
+//                 .clk_speed = I2C_MASTER_FREQ_HZ,
+//             },
+//     };
 
-    ESP_LOGI(TAG, "Starting BLE application");
+//     i2c_bus_handle_t i2c_bus = i2c_bus_create(I2C_NUM, &conf);
 
-    BLE& bleInstance = BLE::instance();
-    bleInstance.init(&radioMutex);
+//     Board*      board     = new Board();
+//     static bool connected = false;
 
-    ESP_LOGI(TAG, "BLE initialized, tasks started");
+//     esp_err_t ret = nvs_flash_init();
+//     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+//     {
+//         ESP_LOGE(TAG, "mktime failed");
+//         ESP_ERROR_CHECK(nvs_flash_erase());
+//         ret = nvs_flash_init();
+//     }
+//     ESP_ERROR_CHECK(ret);
+//     assert(board);
 
-    ui_esp.lvgl_init();
+//     ESP_UTILS_CHECK_FALSE_EXIT(board->init(), "Board init failed");
+//     ESP_UTILS_CHECK_FALSE_EXIT(board->begin(), "Board begin failed");
+//     ESP_UTILS_CHECK_FALSE_EXIT(lvgl_port_init(board->getLCD(), board->getTouch()),
+//                                "LVGL init failed");
+//     lv_disp_t*  dispp = lv_disp_get_default();
+//     lv_theme_t* theme =
+//     lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_BLUE),
+//                               lv_palette_main(LV_PALETTE_RED), true, LV_FONT_DEFAULT);
+//     // lv_disp_set_theme(dispp, theme);
 
-}
+//     UI_ESP& ui_esp = UI_ESP::instance();
+
+//     g_sensor_queue = xQueueCreate(10, sizeof(uint8_t*));
+//     assert(g_sensor_queue != NULL);
+
+//     ui_esp.lvgl_init(dispp, theme);
+
+//     ESP_LOGI(TAG, "Starting BLE application");
+
+//     BLE& bleInstance = BLE::instance();
+
+//     radioMutex = xSemaphoreCreateMutex();
+
+//     if (radioMutex == nullptr) {
+//         ESP_LOGE(TAG, "Failed to create radio mutex");
+//         return;
+//     }
+
+//     bleInstance.init(&radioMutex);
+
+// }

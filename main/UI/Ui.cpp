@@ -1,5 +1,10 @@
 #include "HeaderFiles/Ui.h"
 
+#define I2C_NUM I2C_NUM_0
+#define I2C_MASTER_SDA_IO GPIO_NUM_15 /*!< gpio number for I2C master clock */
+#define I2C_MASTER_SCL_IO GPIO_NUM_16 /*!< gpio number for I2C master data  */
+#define I2C_MASTER_FREQ_HZ 100000     /*!< I2C master clock frequency */
+
 static TaskHandle_t lvgl_task_handle = NULL;
 
 QueueHandle_t g_sensor_queue = nullptr;
@@ -9,83 +14,77 @@ lv_obj_t* UI_ESP::lbl_hum = nullptr;
 lv_obj_t* UI_ESP::lbl_bat = nullptr;
 lv_obj_t* UI_ESP::lbl_pres = nullptr;
 
-void UI_ESP::lvgl_init(){
+void UI_ESP::lvgl_init(lv_disp_t*  dispp, lv_theme_t* theme){
 
-    esp_panel::board::Board* board = new esp_panel::board::Board();
-    
-    assert(board);
-    ESP_UTILS_CHECK_FALSE_EXIT(board->init(), "board init failed");
-    ESP_UTILS_CHECK_FALSE_EXIT(board->begin(), "board begin failed");
-    ESP_UTILS_CHECK_FALSE_EXIT(lvgl_port_init(board->getLCD(),board->getTouch()), "lgvl_port init failed");
+    ESP_LOGI("ui", "UI init start");
 
-    lvgl_port_lock(pdMS_TO_TICKS(100));
+    lv_disp_set_theme(dispp, theme);
+    ESP_LOGI("ui", "Theme applied");
 
-    lv_disp_t* disp = lv_disp_get_default();
-
-    if (!disp) {
-        lvgl_port_unlock();
-        ESP_LOGE("ui", "lv_disp_get_default() returned NULL");
-        return;
-    }
-    
-    lv_theme_t* theme = lv_theme_default_init(
-        disp,
-        lv_palette_main(LV_PALETTE_BLUE),
-        lv_palette_main(LV_PALETTE_CYAN),
-        true,
-        LV_FONT_DEFAULT
-    );
-
-    lv_disp_set_theme(disp, theme);
-
-    lv_obj_t* screen = lv_disp_get_scr_act(disp);
+    lv_obj_t* screen = lv_disp_get_scr_act(dispp);
     lv_obj_t* label = lv_label_create(screen);
     lv_label_set_text(label, "Hello esp!");
     lv_obj_align(label, LV_ALIGN_CENTER,0,0);
-
-    // lv_obj_t* scr = lv_disp_get_scr_act(NULL);
-    // lv_obj_set_style_bg_color(scr,lv_color_white(), 0);
-
+    ESP_LOGI("ui", "Static test label created");
 
     create_text_panel();
+    ESP_LOGI("ui", "Text panel created");
+
     lvgl_port_unlock();
+    ESP_LOGI("ui", "UI init finished, entering queue loop");
 
     const uint8_t* data = nullptr;
     for (;;) {
+        ESP_LOGD("ui", "Waiting for sensor data...");
         if (xQueueReceive(g_sensor_queue, &data, portMAX_DELAY) == pdTRUE && data) {
-            lvgl_port_lock(pdMS_TO_TICKS(50));
-            update_text_panel(data);
-            lvgl_port_unlock();
+            ESP_LOGI("ui", "Got data from queue, updating panel");
+            if (lvgl_port_lock(pdMS_TO_TICKS(50))) {
+                update_text_panel(data);
+                lvgl_port_unlock();
+                ESP_LOGD("ui", "UI updated successfully");
+            } else {
+                ESP_LOGW("ui", "lvgl_port_lock timeout in update");
+            }
         }
         vTaskDelay(pdMS_TO_TICKS(1));
     }
-
-
 }
 
 void UI_ESP::create_text_panel()
 {
+    ESP_LOGI("ui", "Creating text panel labels...");
+
     lv_obj_t *scr = lv_disp_get_scr_act(nullptr);
 
     lbl_temp = lv_label_create(scr);
     lv_label_set_text(lbl_temp, "Temp: --.- °C");
     lv_obj_align(lbl_temp, LV_ALIGN_TOP_MID, 0, 20);
+    ESP_LOGI("ui", "lbl_temp created");
 
     lbl_hum = lv_label_create(scr);
     lv_label_set_text(lbl_hum, "Hum : --.- %");
     lv_obj_align(lbl_hum, LV_ALIGN_TOP_MID, 0, 40);
+    ESP_LOGI("ui", "lbl_hum created");
 
     lbl_bat = lv_label_create(scr);
     lv_label_set_text(lbl_bat, "Battery : --.- %");
     lv_obj_align(lbl_bat, LV_ALIGN_TOP_MID, 0, 60);
+    ESP_LOGI("ui", "lbl_bat created");
 
     lbl_pres = lv_label_create(scr);
-    lv_label_set_text(lbl_pres, "Pressure : --.- %");
+    lv_label_set_text(lbl_pres, "Pressure : --.- hPa");
     lv_obj_align(lbl_pres, LV_ALIGN_TOP_MID, 0, 80);
+    ESP_LOGI("ui", "lbl_pres created");
+
+    ESP_LOGI("ui", "Text panel created OK");
 }
 
-
 void UI_ESP::update_text_panel(const uint8_t *data){
+    if (!data) {
+        ESP_LOGW("ui", "update_text_panel called with null data");
+        return;
+    }
+
     uint8_t battery = data[IDX_BATT];
     int16_t temperature = (int16_t(data[IDX_TEMPH]) << 8) | data[IDX_TEMPL];
     uint16_t humidity = (uint16_t(data[IDX_HUMH]) << 8) | data[IDX_HUML];
@@ -95,8 +94,13 @@ void UI_ESP::update_text_panel(const uint8_t *data){
         data[IDX_PRESSUREL];
     uint16_t co2 = (uint16_t(data[IDX_CO2H]) << 8) | data[IDX_CO2L];
 
+    ESP_LOGI("ui", "Updating panel: batt=%u temp=%.2f hum=%.2f pres=%lu co2=%u",
+             battery, float(temperature)/100, float(humidity)/100, pressure, co2);
+
+        
     lv_label_set_text_fmt(lbl_temp, "Temp: %.2f °C", float(temperature)/100);
     lv_label_set_text_fmt(lbl_hum , "Hum : %.2f%%", float(humidity)/100);
-    lv_label_set_text_fmt(lbl_bat, "Battery: %u °C", battery);
-    lv_label_set_text_fmt(lbl_pres , "Pressure : %lu ", pressure);
+    lv_label_set_text_fmt(lbl_bat, "Battery: %u%%", battery);
+    lv_label_set_text_fmt(lbl_pres , "Pressure : %lu hPa", pressure);
+    ESP_LOGI("ui", "Labels updated");
 }
