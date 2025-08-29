@@ -1,10 +1,5 @@
 #include "HeaderFiles/Ui.h"
 
-#define I2C_NUM I2C_NUM_0
-#define I2C_MASTER_SDA_IO GPIO_NUM_15 /*!< gpio number for I2C master clock */
-#define I2C_MASTER_SCL_IO GPIO_NUM_16 /*!< gpio number for I2C master data  */
-#define I2C_MASTER_FREQ_HZ 100000     /*!< I2C master clock frequency */
-
 static TaskHandle_t lvgl_task_handle = NULL;
 
 QueueHandle_t g_sensor_queue = nullptr;

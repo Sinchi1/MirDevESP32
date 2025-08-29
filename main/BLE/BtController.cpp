@@ -1,24 +1,5 @@
 #include "HeaderFiles/BtController.h"
 
-
-static const char* TAG = "ble";
-
-#define BLE_EVENT_SCANNER_STOPPED_MSK BIT0
-#define BLE_EVENT_CLIENT_READY_MSK BIT1
-#define BLE_EVENT_CLIENT_START_MSK BIT2
-#define BLE_EVENT_CLIENT_STOPPED_MSK BIT3
-
-#define BLE_ADV_SERVICE_UUID "FCD2"
-#define BLE_ESS_SERVICE_UUID "181A"
-#define BLE_TIME_SERVICE_UUID "1805"
-#define BLE_TIME_CHAR_UUID "2A2B"
-#define BLE_VOC_CHAR_UUID "2BE7"
-#define BLE_IAQ_CHAR_UUID "E2890598-1286-43D6-82BA-121248BDA7DA"
-#define BLE_HIST_READ_UUID "E3890598-1286-43D6-82BA-121248BDA7DA"
-#define BLE_HIST_CONF_UUID "E4890598-1286-43D6-82BA-121248BDA7DA"
-
-#define BLE_CYCLE_ENTRIES 24 // 480 byte per cycle
-
 // Structure of advertisement service data without uuid
 // #define SERVICE_DATA_LEN 16
 // static uint8_t service_data[SERVICE_DATA_LEN] = {
@@ -120,7 +101,9 @@ public:
                 const uint8_t* data = reinterpret_cast<const uint8_t*>(service_data.data());
                 ESP_LOG_BUFFER_HEXDUMP(TAG, data, service_data.size(), ESP_LOG_DEBUG);
 
-                if (xQueueSend(g_sensor_queue, &data, 0) == pdTRUE) {
+                const uint8_t* new_data = data; 
+
+                if (xQueueSend(g_sensor_queue, &new_data, 0) == pdTRUE) {
                 ESP_LOGI(TAG, "temp to ui %s", dev_name.c_str());
                 } else {
                     ESP_LOGW(TAG, "Failed to send to UI queue (full?)");
