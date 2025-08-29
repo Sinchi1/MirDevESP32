@@ -22,10 +22,10 @@ void UI_ESP::lvgl_init(lv_disp_t*  dispp, lv_theme_t* theme){
     ESP_LOGI("ui", "Theme applied");
 
     lv_obj_t* screen = lv_disp_get_scr_act(dispp);
-    lv_obj_t* label = lv_label_create(screen);
-    lv_label_set_text(label, "Hello esp!");
-    lv_obj_align(label, LV_ALIGN_CENTER,0,0);
-    ESP_LOGI("ui", "Static test label created");
+    // lv_obj_t* label = lv_label_create(screen);
+    // lv_label_set_text(label, "Hello esp!");
+    // lv_obj_align(label, LV_ALIGN_CENTER,0,0);
+    // ESP_LOGI("ui", "Static test label created");
 
     create_text_panel();
     ESP_LOGI("ui", "Text panel created");
@@ -56,24 +56,29 @@ void UI_ESP::create_text_panel()
 
     lv_obj_t *scr = lv_disp_get_scr_act(nullptr);
 
+    // lbl_name = lv_label_create(scr);
+    // lv_label_set_text(lbl_name, "Device: ...");
+    // lv_obj_align(lbl_name, LV_ALIGN_CENTER, 0, 10);
+    // ESP_LOGI("ui", "lbl_temp created");
+
     lbl_temp = lv_label_create(scr);
     lv_label_set_text(lbl_temp, "Temp: --.- °C");
-    lv_obj_align(lbl_temp, LV_ALIGN_TOP_MID, 0, 20);
+    lv_obj_align(lbl_temp, LV_ALIGN_CENTER, 0, 10);
     ESP_LOGI("ui", "lbl_temp created");
 
     lbl_hum = lv_label_create(scr);
     lv_label_set_text(lbl_hum, "Hum : --.- %");
-    lv_obj_align(lbl_hum, LV_ALIGN_TOP_MID, 0, 40);
+    lv_obj_align(lbl_hum, LV_ALIGN_CENTER, 0, 30);
     ESP_LOGI("ui", "lbl_hum created");
 
     lbl_bat = lv_label_create(scr);
     lv_label_set_text(lbl_bat, "Battery : --.- %");
-    lv_obj_align(lbl_bat, LV_ALIGN_TOP_MID, 0, 60);
+    lv_obj_align(lbl_bat, LV_ALIGN_CENTER, 0, 50);
     ESP_LOGI("ui", "lbl_bat created");
 
     lbl_pres = lv_label_create(scr);
     lv_label_set_text(lbl_pres, "Pressure : --.- hPa");
-    lv_obj_align(lbl_pres, LV_ALIGN_TOP_MID, 0, 80);
+    lv_obj_align(lbl_pres, LV_ALIGN_CENTER, 0, 70);
     ESP_LOGI("ui", "lbl_pres created");
 
     ESP_LOGI("ui", "Text panel created OK");
