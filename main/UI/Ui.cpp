@@ -36,7 +36,7 @@ void UI_ESP::lvgl_init(lv_disp_t*  dispp, lv_theme_t* theme){
     const uint8_t* data = nullptr;
     for (;;) {
         ESP_LOGD("ui", "Waiting for sensor data...");
-        if (xQueueReceive(g_sensor_queue, &data, portMAX_DELAY) == pdTRUE && data) {
+        if (xQueueReceive(g_sensor_queue, &data, portMAX_DELAY) == pdTRUE && data, pdMS_TO_TICKS(1000)) {
             ESP_LOGI("ui", "Got data from queue, updating panel");
             if (lvgl_port_lock(pdMS_TO_TICKS(50))) {
                 update_text_panel(data);
@@ -46,7 +46,7 @@ void UI_ESP::lvgl_init(lv_disp_t*  dispp, lv_theme_t* theme){
                 ESP_LOGW("ui", "lvgl_port_lock timeout in update");
             }
         }
-        vTaskDelay(pdMS_TO_TICKS(1));
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
@@ -55,11 +55,6 @@ void UI_ESP::create_text_panel()
     ESP_LOGI("ui", "Creating text panel labels...");
 
     lv_obj_t *scr = lv_disp_get_scr_act(nullptr);
-
-    // lbl_name = lv_label_create(scr);
-    // lv_label_set_text(lbl_name, "Device: ...");
-    // lv_obj_align(lbl_name, LV_ALIGN_CENTER, 0, 10);
-    // ESP_LOGI("ui", "lbl_temp created");
 
     lbl_temp = lv_label_create(scr);
     lv_label_set_text(lbl_temp, "Temp: --.- °C");
@@ -90,14 +85,15 @@ void UI_ESP::update_text_panel(const uint8_t *data){
         return;
     }
 
+   
     uint8_t battery = data[IDX_BATT];
-    int16_t temperature = (int16_t(data[IDX_TEMPH]) << 8) | data[IDX_TEMPL];
-    uint16_t humidity = (uint16_t(data[IDX_HUMH]) << 8) | data[IDX_HUML];
-    uint32_t pressure =
-        (uint32_t(data[IDX_PRESSUREH]) << 16) |
-        (uint32_t(data[IDX_PRESSUREL+1]) << 8) |
-        data[IDX_PRESSUREL];
-    uint16_t co2 = (uint16_t(data[IDX_CO2H]) << 8) | data[IDX_CO2L];
+                int16_t temperature = (int16_t(data[IDX_TEMPH]) << 8) | data[IDX_TEMPL];
+                uint16_t humidity = (uint16_t(data[IDX_HUMH]) << 8) | data[IDX_HUML];
+                uint32_t pressure =
+                    (uint32_t(data[IDX_PRESSUREH]) << 16) |
+                    (uint32_t(data[IDX_PRESSUREL+1]) << 8) |
+                    data[IDX_PRESSUREL];
+                uint16_t co2 = (uint16_t(data[IDX_CO2H]) << 8) | data[IDX_CO2L];
 
     ESP_LOGI("ui", "Updating panel: batt=%u temp=%.2f hum=%.2f pres=%lu co2=%u",
              battery, float(temperature)/100, float(humidity)/100, pressure, co2);

@@ -120,6 +120,12 @@ public:
                 const uint8_t* data = reinterpret_cast<const uint8_t*>(service_data.data());
                 ESP_LOG_BUFFER_HEXDUMP(TAG, data, service_data.size(), ESP_LOG_DEBUG);
 
+                if (xQueueSend(g_sensor_queue, &data, 0) == pdTRUE) {
+                ESP_LOGI(TAG, "temp to ui %s", dev_name.c_str());
+                } else {
+                    ESP_LOGW(TAG, "Failed to send to UI queue (full?)");
+                }
+
                 uint8_t battery = data[IDX_BATT];
                 int16_t temperature = (int16_t(data[IDX_TEMPH]) << 8) | data[IDX_TEMPL];
                 uint16_t humidity = (uint16_t(data[IDX_HUMH]) << 8) | data[IDX_HUML];
@@ -134,12 +140,6 @@ public:
                 ESP_LOGI(TAG, "Device=[%s] t=%ld battery=%u temp=%.2f°C hum=%.2f%% pres=%lu co2=%u",
                     dev_name.c_str(), long(t), battery,
                     float(temperature)/100, float(humidity)/100, pressure, co2);
-
-                if (xQueueSend(g_sensor_queue, &data, 0) == pdTRUE) {
-                ESP_LOGI(TAG, "temp to ui %s", dev_name.c_str());
-                } else {
-                    ESP_LOGW(TAG, "Failed to send to UI queue (full?)");
-                }
 
                 EnvironmentalSensor::Flags flags;
                 flags.set_source(EnvironmentalSensor::Source::BLE);
