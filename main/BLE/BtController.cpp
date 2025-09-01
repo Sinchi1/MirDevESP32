@@ -20,15 +20,6 @@
 //   0x00, [> Low byte <]
 //   0x00, [> High byte <]
 // };
-#define IDX_BATT 2       /* Index of battery data in service data*/
-#define IDX_TEMPL 4      /* Index of lo byte of temp in service data*/
-#define IDX_TEMPH 5      /* Index of hi byte of temp in service data*/
-#define IDX_HUML 7       /* Index of lo byte of humidity in service data*/
-#define IDX_HUMH 8       /* Index of hi byte of humidity in service data*/
-#define IDX_PRESSUREL 10 /* Index of lo byte of pressure in service data*/
-#define IDX_PRESSUREH 12 /* Index of hi byte of pressure in service data*/
-#define IDX_CO2L 14      /* Index of lo byte of co2 in service data*/
-#define IDX_CO2H 15      /* Index of hi byte of co2 in service data*/
 
 struct HistorySensorMeasurement {
     uint32_t time_s;

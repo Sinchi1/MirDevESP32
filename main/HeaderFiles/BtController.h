@@ -46,6 +46,16 @@
 #define BLE_HIST_READ_UUID "E3890598-1286-43D6-82BA-121248BDA7DA"
 #define BLE_HIST_CONF_UUID "E4890598-1286-43D6-82BA-121248BDA7DA"
 
+#define IDX_BATT 2       /* Index of battery data in service data*/
+#define IDX_TEMPL 4      /* Index of lo byte of temp in service data*/
+#define IDX_TEMPH 5      /* Index of hi byte of temp in service data*/
+#define IDX_HUML 7       /* Index of lo byte of humidity in service data*/
+#define IDX_HUMH 8       /* Index of hi byte of humidity in service data*/
+#define IDX_PRESSUREL 10 /* Index of lo byte of pressure in service data*/
+#define IDX_PRESSUREH 12 /* Index of hi byte of pressure in service data*/
+#define IDX_CO2L 14      /* Index of lo byte of co2 in service data*/
+#define IDX_CO2H 15      /* Index of hi byte of co2 in service data*/
+
 #define BLE_CYCLE_ENTRIES 24 // 480 byte per cycle
 
 static const char* TAG = "ble";
